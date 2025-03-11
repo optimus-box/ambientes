@@ -1,7 +1,9 @@
 ## Preparando o ambiente:
+```
 sudo apt update -y
 sudo apt upgrade -y
 sudo apt install -y curl git fish jq fonts-powerline
+```
 
 ## Desabilitar a memória SWAP, comente a linha referente a memoria swap no arquivo /etc/fstab
 ```
