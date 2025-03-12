@@ -1,0 +1,83 @@
+# Persistent volume NFS
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: mysql-nfs
+spec:
+  capacity:
+    storage: 2Gi
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Delete
+  mountOptions:
+    - hard
+    - nfsvers=4.1
+  nfs:
+    path: /mysql
+    server: 192.168.122.195
+---
+# Persistent volume claim
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mysql-pvc
+spec:
+  resources:
+    requests:
+      storage: 2Gi
+  volumeMode: Filesystem
+  volumeName: mysql-nfs
+  accessModes:
+    - ReadWriteMany
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mysql-config
+data:
+  master.cnf: |
+    [mysqld]
+
+---
+
+# Secret
+apiVersion: v1
+kind: Secret
+metadata:
+  name: mysql-secret
+data:
+  MYSQL_ROOT_PASSWORD: cm9vdA==
+---
+# Statefulset
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mysql
+spec:
+  selector:
+    matchLabels:
+      app: mysql
+  serviceName: mysql
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: mysql
+    spec:
+      containers:
+      - name: mysql
+        image: mysql:latest
+        ports:
+        - containerPort: 3306
+          name: mysql
+        envFrom:
+          - secretRef:
+              name: mysql-secret
+        volumeMounts:
+        - name: data
+          mountPath: /var/lib/mysql
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: mysql-pvc

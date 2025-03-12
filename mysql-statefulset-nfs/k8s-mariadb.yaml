@@ -1,0 +1,73 @@
+# Persistent volume NFS
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: mariadb-nfs
+spec:
+  capacity:
+    storage: 2Gi
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Delete
+  mountOptions:
+    - hard
+    - nfsvers=4.1
+  nfs:
+    path: /mariadb
+    server: 192.168.122.195
+---
+# Persistent volume claim
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mariadb-pvc
+spec:
+  resources:
+    requests:
+      storage: 2Gi
+  volumeMode: Filesystem
+  volumeName: mariadb-nfs
+  accessModes:
+    - ReadWriteMany
+---
+# Secret
+apiVersion: v1
+kind: Secret
+metadata:
+  name: mariadb-secret
+data:
+  MARIADB_ROOT_PASSWORD: cm9vdA==
+---
+# Statefulset
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mariadb
+spec:
+  selector:
+    matchLabels:
+      app: mariadb
+  serviceName: mariadb
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: mariadb
+    spec:
+      containers:
+      - name: mariadb
+        image: mariadb:latest
+        ports:
+        - containerPort: 3306
+          name: mariadb
+        envFrom:
+          - secretRef:
+              name: mariadb-secret
+        volumeMounts:
+        - name: data
+          mountPath: /var/lib/mysql
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: mariadb-pvc
