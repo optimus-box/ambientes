@@ -64,6 +64,7 @@ sudo systemctl restart nfs-kernel-server
 - Passo 02 - Criando os PersistentVolume para os nossos compartilhamentos.
 <br>
 <i>Eu irei criar o apenas um PV porém basta repitir o processo para cada um dos compartilhamentos que você tenha.</i>
+
 ```
 # pv.yaml
 apiVersion: v1
@@ -84,6 +85,7 @@ spec:
     path: /mysql
     server: 192.168.122.195
 ```
+
 <i>Eu irei usar um PersistentVolumeClaim para esse exemplo, porém nada te impede de usar StorageClass</i>
 ```
 # pvc.yaml
@@ -100,6 +102,7 @@ spec:
   accessModes:
     - ReadWriteMany
 ```
+
 - Passo 03 - Criado um StatefulSet
 ```
 # mysql.yaml
